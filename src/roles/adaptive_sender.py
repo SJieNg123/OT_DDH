@@ -3,7 +3,7 @@ import math
 import hashlib
 from src.crypto.ddh_group import DDHGroup
 from src.crypto.commitment import CommitmentScheme
-from src.utils.bitops import int_to_bitlist, xor_bytes
+from src.utils.bitops import int_to_bitlist
 
 class AdaptiveSender:
     """

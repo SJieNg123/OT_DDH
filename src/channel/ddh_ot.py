@@ -1,6 +1,4 @@
 # channel/ddh_ot.py
-import secrets
-import hashlib
 from src.crypto.ddh_group import DDHGroup
 from src.crypto.prf import prf
 
