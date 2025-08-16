@@ -84,28 +84,33 @@ class AdaptiveSender:
             - A list of blinded exponent pairs for the OT channel.
             - The final blinding factor's inverse to be sent to the receiver.
         """
-        # 1. B chooses random elements r_1, ..., r_l 
-        r_values = [self.group.get_random_exponent() for _ in range(self.l)]
-        
-        # 2. For each j, create the blinded pairs <a_j^0 * r_j, a_j^1 * r_j> 
+        from math import gcd
+
+        while True:
+            # 1. B chooses random elements r_1, ..., r_l 
+            r_values = [self.group.get_random_exponent() for _ in range(self.l)]
+
+            # 2. Compute r_product and check invertibility
+            r_product = 1
+            for r in r_values:
+                r_product *= r
+
+            if gcd(r_product, self.group.p - 1) == 1:
+                break
+            else:
+                print("Retrying: r_product not invertible mod (p-1)")
+
+        # 3. For each j, create the blinded pairs <a_j^0 * r_j, a_j^1 * r_j> 
         blinded_exponent_pairs = []
         for j in range(self.l):
             a0, a1 = self.secret_exponents[j]
             r = r_values[j]
-            blinded_a0 = (a0 * r)
-            blinded_a1 = (a1 * r)
+            blinded_a0 = a0 * r
+            blinded_a1 = a1 * r
             blinded_exponent_pairs.append((blinded_a0, blinded_a1))
             
-        # 3. Compute the overall blinding factor and its inverse
-        # The value to be sent is g^(1 / (r1*r2*...*rl)) 
-        r_product = 1
-        for r in r_values:
-            r_product *= r
-        
-        # We need to compute the modular multiplicative inverse of the product.
-        # This is (r_product)^(-1) mod (p-1), since exponents operate in Z_{p-1}.
+        # 4. Compute the modular inverse and final blinding factor
         inverse_r_product = pow(r_product, -1, self.group.p - 1)
-        
         final_blinding_factor = self.group.power(self.group.g, inverse_r_product)
         
         return (blinded_exponent_pairs, final_blinding_factor)
