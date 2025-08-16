@@ -18,7 +18,6 @@ class AdaptiveReceiver:
     def __init__(self, N: int, crypto_group: DDHGroup):
         """
         Initializes the receiver.
-
         Args:
             N: The total number of messages the sender has.
             crypto_group: The DDHGroup instance agreed upon with the sender.
@@ -46,7 +45,6 @@ class AdaptiveReceiver:
     ) -> bool:
         """
         Performs the Transfer phase of Protocol 3.2 to retrieve one item.
-
         Args:
             choice_index: The index of the message the receiver wants to learn.
             blinded_exponent_pairs: The blinded values from the sender for this transfer.
