@@ -5,12 +5,8 @@ from src.crypto.prf import prf
 class DDHOTSender:
     def __init__(self, group: DDHGroup):
         self.group = group
-
-    def prepare(self):
-        # Generate random exponent a and public key A = g^a
-        self.a = self.group.get_random_exponent()
-        self.A = self.group.power(self.group.g, self.a)
-        return self.A
+        self.a = self.group.get_random_exponent()  # Sender's secret exponent
+        self.A = self.group.power(self.group.g, self.a)  # Sender's public key A
 
     def respond(self, B: int, m0: bytes, m1: bytes) -> tuple[bytes, bytes]:
         # Validate public key B
@@ -57,7 +53,6 @@ class DDHOTReceiver:
             return self.group.power(self.group.g, self.b)
         else: # choice_bit == 1
             # If choice is 1, B = A * g^b
-            # This is the corrected logic
             g_pow_b = self.group.power(self.group.g, self.b)
             return (A * g_pow_b) % self.group.p
 

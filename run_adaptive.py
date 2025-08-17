@@ -2,10 +2,6 @@
 from src.crypto.ddh_group import DDHGroup
 from src.roles.adaptive_sender import AdaptiveSender
 from src.roles.adaptive_receiver import AdaptiveReceiver
-
-# We will use ddh_ot channel.
-# Note: The channel itself is stateless, but we will create new instances
-# of the sender/receiver roles within it for each 1-out-of-2 OT.
 from src.channel.ddh_ot import DDHOTSender, DDHOTReceiver
 
 def perform_one_transfer(
@@ -30,32 +26,32 @@ def perform_one_transfer(
 
         # Add debugging output
         print(f"  OT {j}: choice_bit = {choice_bits[j]}")
-        print(f"  OT {j}: m0_int = {m0_int}")
-        print(f"  OT {j}: m1_int = {m1_int}")
+        # print(f"  OT {j}: m0_int = {m0_int}")
+        # print(f"  OT {j}: m1_int = {m1_int}")
 
         # Convert the large integer exponents to a fixed-size byte string
         # Need to do mod op to prevent overflow
         key_byte_len = (sender.group.p.bit_length() + 7) // 8
-        m0_bytes = (m0_int % sender.group.p).to_bytes(key_byte_len, 'big')
-        m1_bytes = (m1_int % sender.group.p).to_bytes(key_byte_len, 'big')
+        m0_bytes = (m0_int % sender.group.p).to_bytes(key_byte_len, 'big', signed = False)
+        m1_bytes = (m1_int % sender.group.p).to_bytes(key_byte_len, 'big', signed = False)
 
         ot_sender = DDHOTSender(sender.group)
         ot_receiver = DDHOTReceiver(receiver.group, choice_bits[j])
 
         try:
-            print(f"  OT {j}: Calling ot_sender.prepare()...")
-            A = ot_sender.prepare()
-            print(f"  OT {j}: A = {A}")
+            # print(f"  OT {j}: Calling ot_sender.prepare()...")
+            A = ot_sender.A
+            # print(f"  OT {j}: A = {A}")
             
-            print(f"  OT {j}: Calling ot_receiver.generate_B(A)...")
+            # print(f"  OT {j}: Calling ot_receiver.generate_B(A)...")
             B = ot_receiver.generate_B(A)
-            print(f"  OT {j}: B = {B}")
+            # print(f"  OT {j}: B = {B}")
             
-            print(f"  OT {j}: Calling ot_sender.respond(B, m0_bytes, m1_bytes)...")
+            # print(f"  OT {j}: Calling ot_sender.respond(B, m0_bytes, m1_bytes)...")
             c0_bytes, c1_bytes = ot_sender.respond(B, m0_bytes, m1_bytes)
-            print(f"  OT {j}: Got ciphertexts, lengths: {len(c0_bytes)}, {len(c1_bytes)}")
+            # print(f"  OT {j}: Got ciphertexts, lengths: {len(c0_bytes)}, {len(c1_bytes)}")
             
-            print(f"  OT {j}: Calling ot_receiver.recover((c0_bytes, c1_bytes))...")
+            # print(f"  OT {j}: Calling ot_receiver.recover((c0_bytes, c1_bytes))...")
             recovered_bytes = ot_receiver.recover((c0_bytes, c1_bytes))
             
             # Convert the recovered byte string back to an integer

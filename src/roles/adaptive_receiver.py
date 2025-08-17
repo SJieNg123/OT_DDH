@@ -26,6 +26,16 @@ class AdaptiveReceiver:
         final_blinding_factor: int,
         original_message: bytes # For verification only
     ) -> bool:
+        
+        # Check number of exponents
+        assert len(selected_blinded_exponents) == self.l, (
+            f"Expected {self.l} exponents, got {len(selected_blinded_exponents)}"
+        )
+
+        # Output bitlist according to index choosen
+        bitlist = self.int_to_bitlist(choice_index, self.l)
+        print(f"[DEBUG] Receiver bitlist for index {choice_index}: {bitlist}")
+
         # Multiply the selected blinded exponents together
         combined_product = 1
         for exp in selected_blinded_exponents:
@@ -45,4 +55,13 @@ class AdaptiveReceiver:
             original_message,
             reconstructed_key_K_I
         )
+
+        # print(f"[DEBUG] Selected blinded exponents (a_j^0 or a_j^1): {[hex(e) for e in selected_blinded_exponents]}")
+        # print(f"[DEBUG] Product of exponents: {combined_product}")
+        # print(f"[DEBUG] final_blinding_factor: {hex(final_blinding_factor)}")
+        # print(f"[DEBUG] synthesizer_output: {hex(reconstructed_synthesizer_output)}")
+        print(f"[DEBUG] K_I: {reconstructed_key_K_I.hex()}")
+        print(f"[DEBUG] Y_I: {commitment_Y_I.hex()}")
+        print(f"[DEBUG] H(K, M): {self.commitment_scheme.commit(original_message, reconstructed_key_K_I).hex()}")
+
         return is_verified
