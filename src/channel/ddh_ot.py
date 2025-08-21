@@ -13,6 +13,10 @@ class DDHOTSender:
         if not (1 < B < self.group.p):
             raise ValueError("Invalid public key B")
 
+        # Validate that B is in the prime-order subgroup
+        if pow(B, self.group.q, self.group.p) != 1:
+            raise ValueError("B not in prime-order subgroup")
+
         # Validate message lengths
         if len(m0) != len(m1):
             raise ValueError("Messages must be of the same length")

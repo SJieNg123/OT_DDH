@@ -2,7 +2,7 @@
 from __future__ import annotations
 import argparse
 import random
-from typing import List, Tuple
+from typing import List
 
 from src.crypto.ddh_group import DDHGroup
 from src.roles.adaptive_sender import AdaptiveSender
