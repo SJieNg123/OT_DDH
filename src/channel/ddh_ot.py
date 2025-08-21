@@ -1,6 +1,6 @@
 # channel/ddh_ot.py
 from src.crypto.ddh_group import DDHGroup
-from src.crypto.prf import prf
+from src.crypto.prf import prf_labeled
 
 class DDHOTSender:
     def __init__(self, group: DDHGroup):
@@ -19,17 +19,16 @@ class DDHOTSender:
         
         # Compute shared secrets
         K0 = self.group.power(B, self.a)  # K0 = B^a
-        
-        # Modular inverse for B/A
-        A_inv = pow(self.A, -1, self.group.p)
-        B_div_A = (B * A_inv) % self.group.p
-        K1 = self.group.power(B_div_A, self.a)  # K1 = (B/A)^a
+        A_inv = self.group.inverse(self.A)
+        K1 = self.group.power((B * A_inv) % self.group.p, self.a)
 
         # Derive pads via PRF
         # The key should be a consistent byte length
-        key_byte_len = (self.group.p.bit_length() + 7) // 8
-        pad0 = prf(K0.to_bytes(key_byte_len, 'big'), len(m0))
-        pad1 = prf(K1.to_bytes(key_byte_len, 'big'), len(m1))
+        key_byte_len = (self.group.q.bit_length() + 7) // 8
+        K0b = K0.to_bytes(key_byte_len, 'big')
+        K1b = K1.to_bytes(key_byte_len, 'big')
+        pad0 = prf_labeled(K0b, b"OT2|m0", len(m0))
+        pad1 = prf_labeled(K1b, b"OT2|m1", len(m1))
 
         # Mask messages
         c0 = bytes(x ^ y for x, y in zip(m0, pad0))
@@ -39,6 +38,8 @@ class DDHOTSender:
 
 class DDHOTReceiver:
     def __init__(self, group: DDHGroup, choice_bit: int):
+        if choice_bit not in (0, 1):
+            raise ValueError("choice_bit must be 0 or 1")
         self.group = group
         self.choice_bit = choice_bit
         
@@ -47,7 +48,7 @@ class DDHOTReceiver:
         self.A = None # To be received from sender
 
     def generate_B(self, A: int) -> int:
-        self.A = A
+        self.A = A 
         if self.choice_bit == 0:
             # If choice is 0, B = g^b
             return self.group.power(self.group.g, self.b)
@@ -57,15 +58,24 @@ class DDHOTReceiver:
             return (A * g_pow_b) % self.group.p
 
     def recover(self, c_tuple: tuple[bytes, bytes]) -> bytes:
+        if self.A is None:
+            raise RuntimeError("A not set on receiver")
         # Receiver always computes the key K as A^b
-        K = self.group.power(self.A, self.b)
+        K = self.group.power(self.A, self.b) # g^{ab}
         
         # Choose the correct ciphertext
         chosen_ciphertext = c_tuple[self.choice_bit]
 
         # Derive the pad using the computed key K
-        key_byte_len = (self.group.p.bit_length() + 7) // 8
-        pad = prf(K.to_bytes(key_byte_len, 'big'), len(chosen_ciphertext))
+        key_byte_len = (self.group.q.bit_length() + 7) // 8
+        Kb = K.to_bytes(key_byte_len, 'big')
+
+        if self.choice_bit == 0:
+            label = b"OT2|m0"
+        else:
+            label = b"OT2|m1"
+            
+        pad = prf_labeled(Kb, label, len(chosen_ciphertext))
         
         # Unmask the message
         return bytes(x ^ y for x, y in zip(chosen_ciphertext, pad))

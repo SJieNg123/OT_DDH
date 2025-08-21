@@ -2,17 +2,6 @@
 import secrets
 
 class DDHGroup:
-    """
-    Represents a cyclic group where the Decisional Diffie-Hellman (DDH)
-    assumption is believed to hold.
-
-    This class uses pre-defined, standard "safe" prime and generator values.
-    Generating secure parameters from scratch is a complex process. Using
-    standardized parameters is a common and secure practice.
-
-    The parameters used here are for demonstration purposes.
-    """
-
     def __init__(self):
         """
         Initializes the group with a pre-defined 2048-bit safe prime (p)
@@ -32,31 +21,21 @@ class DDHGroup:
             DE2BCBF6 95581718 3995497C EA956AE5 15D22618 98FA0510
             15728E5A 8AACAA68 FFFFFFFF FFFFFFFF
                     """.replace(" ", "").replace("\n", ""), 16)
+        self.q = (self.p - 1) // 2
         self.g = 2
-        print(f"DDH Group initialized with a {self.p.bit_length()}-bit prime.")
+        # print(f"DDH Group initialized with a {self.p.bit_length()}-bit prime.")
+        assert pow(self.g, self.q, self.p) == 1 and pow(self.g, 2, self.p) != 1, "Generator g is not valid"
 
     def power(self, base: int, exp: int) -> int:
-        """
-        Computes (base^exp) mod p.
-        This is the core operation for the multiplication-respecting synthesizer.
-        For example, g^(x1 * x2) is computed as power(g, x1 * x2).
-        """
-        
-        # Ensure base is in the range [0, p-1]
-        base = base % self.p
-        return pow(base, exp, self.p)
+        return pow(base % self.p, exp % self.q, self.p)
 
+    def multiply(self, a: int, b: int) -> int:
+        return (a * b) % self.p
+
+    def inverse(self, x: int) -> int:
+        if x % self.p == 0:
+            raise ValueError("inverse of 0 mod p")
+        return pow(x, self.p - 2, self.p)
+    
     def get_random_exponent(self) -> int:
-        """
-        Generates a cryptographically secure random exponent.
-        The sender uses this to generate the secret key pairs (a_j^0, a_j^1)
-        and the blinding factors (r_j) for the transfer phase. [cite: 469, 472]
-
-        The exponent should be in the range [1, p-1].
-
-        Returns:
-            A random integer.
-        """
-        # The order of the multiplicative group Z_p* is p-1.
-        # We generate a random number in the range [0, p-2] and add 1.
-        return secrets.randbelow(self.p - 1) + 1
+        return secrets.randbelow(self.q - 1) + 1
