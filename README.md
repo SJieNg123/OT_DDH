@@ -1,6 +1,6 @@
 # OT_DDH
 
-Lightweight Python demos for DDH-based Oblivious Transfer (OT).
+Lightweight Python implementation for DDH-based Oblivious Transfer (OT).
 
 This repo includes:
 - 1-out-of-2 OT
