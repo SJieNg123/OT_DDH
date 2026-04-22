@@ -66,7 +66,7 @@ def main():
     N = m * m
 
     # --- Group setup (prime-order subgroup) ---
-    group = DDHGroup()  # 你的 DDHGroup 內部要檢查 g 的 order == q
+    group = DDHGroup() 
 
     # --- Messages and parties ---
     messages = build_messages(m)
